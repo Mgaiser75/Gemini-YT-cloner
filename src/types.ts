@@ -9,6 +9,9 @@ export interface Project {
   improvement_suggestions?: string;
   status: string;
   created_at: string;
+  wan_prompts?: string; // JSON string of WanScenePrompt[]
+  gemini_video_url?: string;
+  cloned_from?: string; // ID or Title of the original content
 }
 
 export interface Niche {

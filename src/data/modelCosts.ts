@@ -59,6 +59,25 @@ export const MODEL_COSTS: Record<string, ModelCost> = {
   'qwen': { id: 'qwen', provider: 'ollama', unit: 'free', tier: 'Free' },
   'gemma': { id: 'gemma', provider: 'ollama', unit: 'free', tier: 'Free' },
   'llava': { id: 'llava', provider: 'ollama', unit: 'free', tier: 'Free' },
+  // Updated Anthropic Models
+  'claude-opus-4-6':           { id: 'claude-opus-4-6',           provider: 'anthropic', costPer1MTokens: 75.00, unit: 'tokens', tier: 'Premium' },
+  'claude-sonnet-4-6':         { id: 'claude-sonnet-4-6',         provider: 'anthropic', costPer1MTokens: 15.00, unit: 'tokens', tier: 'Standard' },
+  'claude-haiku-4-5-20251001': { id: 'claude-haiku-4-5-20251001', provider: 'anthropic', costPer1MTokens: 2.50,  unit: 'tokens', tier: 'Budget' },
+
+  // Updated OpenAI Models
+  'gpt-4.1':      { id: 'gpt-4.1',      provider: 'openai', costPer1MTokens: 5.00,  unit: 'tokens', tier: 'Standard' },
+  'gpt-4.1-mini': { id: 'gpt-4.1-mini', provider: 'openai', costPer1MTokens: 0.30,  unit: 'tokens', tier: 'Budget' },
+  'o3-mini':      { id: 'o3-mini',      provider: 'openai', costPer1MTokens: 1.10,  unit: 'tokens', tier: 'Budget' },
+
+  // Updated Mistral Models
+  'mistral-large-2411': { id: 'mistral-large-2411', provider: 'mistral', costPer1MTokens: 4.00, unit: 'tokens', tier: 'Standard' },
+  'mistral-small-2409': { id: 'mistral-small-2409', provider: 'mistral', costPer1MTokens: 0.60, unit: 'tokens', tier: 'Budget' },
+
+  // Updated DeepSeek
+  'deepseek-reasoner': { id: 'deepseek-reasoner', provider: 'deepseek', costPer1MTokens: 1.10, unit: 'tokens', tier: 'Budget' },
+
+  // Updated Gemini
+  'gemini-2.5-pro': { id: 'gemini-2.5-pro', provider: 'gemini', costPer1MTokens: 3.00, unit: 'tokens', tier: 'Standard' },
 };
 
 export function getModelCostDisplay(modelId: string, task?: 'analysis' | 'cloning' | 'video' | 'audio'): string {

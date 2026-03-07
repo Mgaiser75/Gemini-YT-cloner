@@ -1,7 +1,7 @@
 
 import React from "react";
 import { Cpu, ChevronDown } from "lucide-react";
-import { AISettings, PROVIDER_MODELS, AIProvider, ModelConfig } from "../services/aiConfig";
+import { AISettings, PROVIDER_MODELS, AIProvider, ModelConfig, PROVIDER_DISPLAY_NAMES } from "../services/aiConfig";
 import { getModelCostDisplay } from "../data/modelCosts";
 import { cn } from "../utils/cn";
 
@@ -74,7 +74,7 @@ export function QuickModelSelector({ type, settings, onUpdate, className }: Quic
             className="bg-transparent text-[10px] font-bold uppercase focus:outline-none cursor-pointer"
           >
             {availableProviders.map(p => (
-              <option key={p} value={p}>{p}</option>
+              <option key={p} value={p}>{PROVIDER_DISPLAY_NAMES[p]}</option>
             ))}
           </select>
         </div>

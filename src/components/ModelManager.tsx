@@ -1,8 +1,9 @@
 
-import React, { useState } from "react";
-import { Settings, Save, Globe, Cpu, Key, Database, Info, MonitorPlay } from "lucide-react";
-import { AISettings, PROVIDER_MODELS, AIProvider, ModelConfig } from "../services/aiConfig";
+import React, { useState, useEffect } from "react";
+import { Settings, Save, Globe, Cpu, Key, Database, Info, MonitorPlay, Trash2, RefreshCw } from "lucide-react";
+import { AISettings, PROVIDER_MODELS, AIProvider, ModelConfig, PROVIDER_DISPLAY_NAMES } from "../services/aiConfig";
 import { getModelCostDisplay } from "../data/modelCosts";
+import { getCacheStats, clearCacheStats } from "../services/aiService";
 import { motion } from "motion/react";
 
 interface ModelManagerProps {
@@ -13,6 +14,16 @@ interface ModelManagerProps {
 
 export function ModelManager({ settings, onSave, onClose }: ModelManagerProps) {
   const [tempSettings, setTempSettings] = useState<AISettings>(settings);
+  const [cacheStats, setCacheStats] = useState<any>({});
+
+  useEffect(() => {
+    setCacheStats(getCacheStats());
+  }, []);
+
+  const handleClearCache = () => {
+    clearCacheStats();
+    setCacheStats({});
+  };
 
   const handleUpdateModel = (type: Exclude<keyof AISettings, 'youtubeApiKey'>, field: keyof ModelConfig, value: any) => {
     setTempSettings(prev => ({
@@ -57,7 +68,9 @@ export function ModelManager({ settings, onSave, onClose }: ModelManagerProps) {
               className="w-full bg-[#E4E3E0]/20 border border-[#141414]/10 p-2 text-sm font-bold focus:ring-0 focus:border-[#141414]"
             >
               {availableProviders.map(p => (
-                <option key={p} value={p}>{p.charAt(0).toUpperCase() + p.slice(1)}</option>
+                <option key={p} value={p}>
+                  {PROVIDER_DISPLAY_NAMES[p]}
+                </option>
               ))}
             </select>
           </div>
@@ -187,6 +200,33 @@ export function ModelManager({ settings, onSave, onClose }: ModelManagerProps) {
               </div>
               <p className="text-[10px] opacity-50">Required for channel analysis and video research.</p>
             </div>
+          </div>
+          <div className="bg-white border border-[#141414] p-6 space-y-4 shadow-[4px_4px_0px_0px_rgba(20,20,20,0.05)]">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <div className="p-2 bg-emerald-600 text-white rounded-sm">
+                  <RefreshCw className="w-5 h-5" />
+                </div>
+                <h3 className="text-lg font-bold italic font-serif">Prompt Caching Stats</h3>
+              </div>
+              <button onClick={handleClearCache} className="text-xs text-red-600 hover:underline flex items-center gap-1">
+                <Trash2 className="w-3 h-3" /> Clear Stats
+              </button>
+            </div>
+            
+            {Object.keys(cacheStats).length === 0 ? (
+              <p className="text-sm text-gray-500 italic">No cache data yet.</p>
+            ) : (
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {Object.entries(cacheStats).map(([key, val]: [string, any]) => (
+                  <div key={key} className="bg-gray-50 p-3 border border-gray-200 rounded-sm">
+                    <div className="text-[10px] uppercase font-bold text-gray-500 mb-1">{key.replace(':', ' / ')}</div>
+                    <div className="text-xl font-mono font-bold">{val.hits} <span className="text-xs font-sans font-normal text-gray-400">hits</span></div>
+                    <div className="text-[10px] text-emerald-600 font-bold">Saved {val.saved.toLocaleString()} tokens</div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 

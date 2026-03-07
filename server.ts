@@ -2,13 +2,20 @@ import express from "express";
 import { createServer as createViteServer } from "vite";
 import Database from "better-sqlite3";
 import path from "path";
+import fs from "fs";
 import { fileURLToPath } from "url";
-import { searchYouTubeChannels, searchYouTubeVideos, getVideoDetails, extractVideoId } from "./youtube-service.js";
+import { searchYouTubeChannels, searchYouTubeVideos, getVideoDetails, getChannelDetails, extractVideoId } from "./youtube-service.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const db = new Database("projects.db");
+
+// Ensure data/projects directory exists for git persistence
+const PROJECTS_DIR = path.join(__dirname, "data", "projects");
+if (!fs.existsSync(PROJECTS_DIR)) {
+  fs.mkdirSync(PROJECTS_DIR, { recursive: true });
+}
 
 // Initialize database
 db.exec(`
@@ -20,7 +27,10 @@ db.exec(`
     original_video_url TEXT,
     improved_script TEXT,
     visual_prompts TEXT,
+    wan_prompts TEXT,
     improvement_suggestions TEXT,
+    cloned_from TEXT,
+    gemini_video_url TEXT,
     status TEXT DEFAULT 'draft',
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
   );
@@ -51,17 +61,75 @@ async function startServer() {
   });
 
   app.post("/api/projects", (req, res) => {
-    const { title, niche, original_channel, original_video_url, improved_script, visual_prompts, improvement_suggestions } = req.body;
-    const info = db.prepare(`
-      INSERT INTO projects (title, niche, original_channel, original_video_url, improved_script, visual_prompts, improvement_suggestions)
-      VALUES (?, ?, ?, ?, ?, ?, ?)
-    `).run(title, niche, original_channel, original_video_url, improved_script, visual_prompts, improvement_suggestions);
+    const { 
+      title, niche, original_channel, original_video_url, 
+      improved_script, visual_prompts, wan_prompts, 
+      improvement_suggestions, cloned_from, gemini_video_url 
+    } = req.body;
     
-    res.json({ id: info.lastInsertRowid });
+    const info = db.prepare(`
+      INSERT INTO projects (
+        title, niche, original_channel, original_video_url, 
+        improved_script, visual_prompts, wan_prompts, 
+        improvement_suggestions, cloned_from, gemini_video_url
+      )
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(
+      title, niche, original_channel, original_video_url, 
+      improved_script, visual_prompts, wan_prompts, 
+      improvement_suggestions, cloned_from, gemini_video_url
+    );
+    
+    const id = info.lastInsertRowid;
+    
+    // Save to JSON file for git persistence
+    const projectData = {
+      id,
+      ...req.body,
+      created_at: new Date().toISOString()
+    };
+    fs.writeFileSync(
+      path.join(PROJECTS_DIR, `${id}.json`), 
+      JSON.stringify(projectData, null, 2)
+    );
+    
+    res.json({ id });
+  });
+
+  app.patch("/api/projects/:id", (req, res) => {
+    const id = req.params.id;
+    const updates = req.body;
+    
+    const fields = Object.keys(updates).map(key => `${key} = ?`).join(", ");
+    const values = Object.values(updates);
+    
+    if (fields.length === 0) {
+      return res.json({ success: true });
+    }
+    
+    db.prepare(`UPDATE projects SET ${fields} WHERE id = ?`).run(...values, id);
+    
+    // Update JSON file
+    const projectFile = path.join(PROJECTS_DIR, `${id}.json`);
+    if (fs.existsSync(projectFile)) {
+      const currentData = JSON.parse(fs.readFileSync(projectFile, 'utf-8'));
+      const newData = { ...currentData, ...updates };
+      fs.writeFileSync(projectFile, JSON.stringify(newData, null, 2));
+    }
+    
+    res.json({ success: true });
   });
 
   app.delete("/api/projects/:id", (req, res) => {
-    db.prepare("DELETE FROM projects WHERE id = ?").run(req.params.id);
+    const id = req.params.id;
+    db.prepare("DELETE FROM projects WHERE id = ?").run(id);
+    
+    // Delete JSON file
+    const projectFile = path.join(PROJECTS_DIR, `${id}.json`);
+    if (fs.existsSync(projectFile)) {
+      fs.unlinkSync(projectFile);
+    }
+    
     res.json({ success: true });
   });
 
@@ -126,6 +194,20 @@ async function startServer() {
         return res.status(400).json({ error: "Invalid YouTube URL" });
       }
       const details = await getVideoDetails(videoId, apiKey);
+      res.json(details);
+    } catch (e: any) {
+      res.status(500).json({ error: e.message });
+    }
+  });
+
+  app.get("/api/youtube/channel-details", async (req, res) => {
+    try {
+      const { id } = req.query;
+      const apiKey = req.headers['x-youtube-api-key'] as string;
+      if (!id) {
+        return res.status(400).json({ error: "Channel ID is required" });
+      }
+      const details = await getChannelDetails(id as string, apiKey);
       res.json(details);
     } catch (e: any) {
       res.status(500).json({ error: e.message });

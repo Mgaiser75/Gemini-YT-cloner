@@ -1,5 +1,5 @@
 
-export type AIProvider = 'gemini' | 'openrouter' | 'huggingface' | 'ollama' | 'openai' | 'anthropic' | 'mistral' | 'deepseek';
+export type AIProvider = 'gemini' | 'openrouter' | 'huggingface' | 'ollama' | 'openai' | 'anthropic' | 'mistral' | 'deepseek' | 'alibaba';
 
 export interface ModelConfig {
   provider: AIProvider;
@@ -19,11 +19,11 @@ export interface AISettings {
 export const DEFAULT_SETTINGS: AISettings = {
   analysisModel: {
     provider: 'gemini',
-    modelId: 'gemini-3.1-pro-preview',
+    modelId: 'gemini-2.5-pro',
   },
   cloningModel: {
     provider: 'gemini',
-    modelId: 'gemini-3.1-pro-preview',
+    modelId: 'gemini-2.5-flash',
   },
   videoModel: {
     provider: 'gemini',
@@ -42,11 +42,24 @@ export interface ModelOption {
   capabilities: ('text' | 'image' | 'video' | 'audio')[];
 }
 
+export const PROVIDER_DISPLAY_NAMES: Record<AIProvider, string> = {
+  gemini: 'Google',
+  alibaba: 'Alibaba',
+  openai: 'OpenAI',
+  anthropic: 'Anthropic',
+  mistral: 'Mistral',
+  deepseek: 'DeepSeek',
+  openrouter: 'OpenRouter',
+  huggingface: 'HuggingFace',
+  ollama: 'Ollama',
+};
+
 export const PROVIDER_MODELS: Record<AIProvider, ModelOption[]> = {
   gemini: [
     { id: 'gemini-3.1-pro-preview', name: 'Gemini 3.1 Pro', capabilities: ['text'] },
     { id: 'gemini-3-flash-preview', name: 'Gemini 3 Flash', capabilities: ['text'] },
     { id: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash', capabilities: ['text'] },
+    { id: 'gemini-2.5-pro', name: 'Gemini 2.5 Pro', capabilities: ['text'] },
     { id: 'gemini-3.1-flash-image-preview', name: 'Gemini 3.1 Flash Image', capabilities: ['image'] },
     { id: 'veo-3.1-fast-generate-preview', name: 'Veo 3.1 Fast', capabilities: ['video'] },
     { id: 'veo-3.1-generate-preview', name: 'Veo 3.1 High Quality', capabilities: ['video'] },
@@ -59,20 +72,27 @@ export const PROVIDER_MODELS: Record<AIProvider, ModelOption[]> = {
     { id: 'dall-e-3', name: 'DALL-E 3', capabilities: ['image'] },
     { id: 'tts-1', name: 'TTS-1', capabilities: ['audio'] },
     { id: 'tts-1-hd', name: 'TTS-1 HD', capabilities: ['audio'] },
+    { id: 'gpt-4.1', name: 'GPT-4.1', capabilities: ['text', 'image'] },
+    { id: 'gpt-4.1-mini', name: 'GPT-4.1 Mini', capabilities: ['text'] },
+    { id: 'o3-mini', name: 'o3 Mini', capabilities: ['text'] },
   ],
   anthropic: [
-    { id: 'claude-3-opus-20240229', name: 'Claude 3 Opus', capabilities: ['text'] },
-    { id: 'claude-3-sonnet-20240229', name: 'Claude 3 Sonnet', capabilities: ['text'] },
-    { id: 'claude-3-haiku-20240307', name: 'Claude 3 Haiku', capabilities: ['text'] },
+    { id: 'claude-opus-4-6', name: 'Claude Opus 4.6', capabilities: ['text'] },
+    { id: 'claude-sonnet-4-6', name: 'Claude Sonnet 4.6', capabilities: ['text'] },
+    { id: 'claude-haiku-4-5-20251001', name: 'Claude Haiku 4.5', capabilities: ['text'] },
   ],
   mistral: [
-    { id: 'mistral-large-latest', name: 'Mistral Large', capabilities: ['text'] },
-    { id: 'mistral-medium-latest', name: 'Mistral Medium', capabilities: ['text'] },
-    { id: 'mistral-small-latest', name: 'Mistral Small', capabilities: ['text'] },
+    { id: 'mistral-large-2411', name: 'Mistral Large', capabilities: ['text'] },
+    { id: 'mistral-small-2409', name: 'Mistral Small', capabilities: ['text'] },
   ],
   deepseek: [
     { id: 'deepseek-chat', name: 'DeepSeek Chat', capabilities: ['text'] },
     { id: 'deepseek-coder', name: 'DeepSeek Coder', capabilities: ['text'] },
+    { id: 'deepseek-reasoner', name: 'DeepSeek Reasoner', capabilities: ['text'] },
+  ],
+  alibaba: [
+    { id: 'wan-2.1-t2v-1.3b', name: 'Wan 2.1 (1.3B)', capabilities: ['video'] },
+    { id: 'wan-2.1-t2v-14b', name: 'Wan 2.1 (14B)', capabilities: ['video'] },
   ],
   openrouter: [
     { id: 'mistralai/mistral-7b-instruct', name: 'Mistral 7B', capabilities: ['text'] },
