@@ -1,14 +1,18 @@
 import { google } from "googleapis";
 
-const youtube = google.youtube({
-  version: "v3",
-  auth: process.env.YOUTUBE_API_KEY,
-});
-
-export async function searchYouTubeChannels(query: string) {
-  if (!process.env.YOUTUBE_API_KEY) {
+function getYoutubeClient(apiKey?: string) {
+  const key = apiKey || process.env.YOUTUBE_API_KEY;
+  if (!key) {
     throw new Error("YOUTUBE_API_KEY is not set");
   }
+  return google.youtube({
+    version: "v3",
+    auth: key,
+  });
+}
+
+export async function searchYouTubeChannels(query: string, apiKey?: string) {
+  const youtube = getYoutubeClient(apiKey);
 
   const res = await youtube.search.list({
     part: ["snippet"],
@@ -20,10 +24,8 @@ export async function searchYouTubeChannels(query: string) {
   return res.data.items || [];
 }
 
-export async function searchYouTubeVideos(query: string) {
-  if (!process.env.YOUTUBE_API_KEY) {
-    throw new Error("YOUTUBE_API_KEY is not set");
-  }
+export async function searchYouTubeVideos(query: string, apiKey?: string) {
+  const youtube = getYoutubeClient(apiKey);
 
   const res = await youtube.search.list({
     part: ["snippet"],
@@ -36,10 +38,8 @@ export async function searchYouTubeVideos(query: string) {
   return res.data.items || [];
 }
 
-export async function getVideoDetails(videoId: string) {
-  if (!process.env.YOUTUBE_API_KEY) {
-    throw new Error("YOUTUBE_API_KEY is not set");
-  }
+export async function getVideoDetails(videoId: string, apiKey?: string) {
+  const youtube = getYoutubeClient(apiKey);
 
   const res = await youtube.videos.list({
     part: ["snippet", "statistics"],

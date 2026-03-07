@@ -98,7 +98,8 @@ async function startServer() {
   app.get("/api/youtube/search/channels", async (req, res) => {
     try {
       const { q } = req.query;
-      const channels = await searchYouTubeChannels(q as string);
+      const apiKey = req.headers['x-youtube-api-key'] as string;
+      const channels = await searchYouTubeChannels(q as string, apiKey);
       res.json(channels);
     } catch (e: any) {
       res.status(500).json({ error: e.message });
@@ -108,7 +109,8 @@ async function startServer() {
   app.get("/api/youtube/search/videos", async (req, res) => {
     try {
       const { q } = req.query;
-      const videos = await searchYouTubeVideos(q as string);
+      const apiKey = req.headers['x-youtube-api-key'] as string;
+      const videos = await searchYouTubeVideos(q as string, apiKey);
       res.json(videos);
     } catch (e: any) {
       res.status(500).json({ error: e.message });
@@ -118,11 +120,12 @@ async function startServer() {
   app.get("/api/youtube/video-details", async (req, res) => {
     try {
       const { url } = req.query;
+      const apiKey = req.headers['x-youtube-api-key'] as string;
       const videoId = extractVideoId(url as string);
       if (!videoId) {
         return res.status(400).json({ error: "Invalid YouTube URL" });
       }
-      const details = await getVideoDetails(videoId);
+      const details = await getVideoDetails(videoId, apiKey);
       res.json(details);
     } catch (e: any) {
       res.status(500).json({ error: e.message });

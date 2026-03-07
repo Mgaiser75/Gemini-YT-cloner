@@ -189,6 +189,45 @@ export async function discoverHighPotentialNiches(settings: AISettings) {
   }
 }
 
+export async function generateImprovedContentProposals(channelName: string, niche: string, settings: AISettings) {
+  const prompt = `Analyze the YouTube channel "${channelName}" in the "${niche}" niche.
+    
+    Identify 3 specific videos or content pieces from this channel that have high potential but could be significantly improved.
+    For each, propose a "2.0 Version" that is more click-worthy, has better SEO, or fills a content gap.
+
+    For each proposal, provide:
+    - originalTitle: The title of the content being improved.
+    - improvementType: One of "Title Pivot", "Format Shift", "Deep Dive", or "Contrarian Take".
+    - improvedTitle: The new, high-CTR title.
+    - improvedConcept: A brief explanation of how the content itself would change (e.g., "Add better visualization", "Cut the fluff", "Focus on a specific case study").
+    - reason: Why this improvement would work better.
+    
+    IMPORTANT: Respond ONLY with a valid JSON array of objects.`;
+
+  const schema = {
+    type: Type.ARRAY,
+    items: {
+      type: Type.OBJECT,
+      properties: {
+        originalTitle: { type: Type.STRING },
+        improvementType: { type: Type.STRING },
+        improvedTitle: { type: Type.STRING },
+        improvedConcept: { type: Type.STRING },
+        reason: { type: Type.STRING }
+      },
+      required: ["originalTitle", "improvementType", "improvedTitle", "improvedConcept", "reason"]
+    }
+  };
+
+  const text = await generateText(prompt, settings.analysisModel, schema);
+  try {
+    return JSON.parse(text || "[]");
+  } catch (e) {
+    const jsonMatch = text?.match(/\[[\s\S]*\]/);
+    return JSON.parse(jsonMatch ? jsonMatch[0] : "[]");
+  }
+}
+
 export async function analyzeChannel(channelName: string, niche: string, settings: AISettings) {
   const prompt = `Analyze the YouTube channel "${channelName}" in the "${niche}" niche.
     

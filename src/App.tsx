@@ -46,7 +46,8 @@ import {
   generateVideoClip,
   pollVideoOperation,
   generateVoiceover,
-  generateMusicPrompts
+  generateMusicPrompts,
+  generateImprovedContentProposals
 } from "./services/aiService";
 import { ModelManager } from "./components/ModelManager";
 import { QuickModelSelector } from "./components/QuickModelSelector";
@@ -196,11 +197,11 @@ export default function App() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   return (
-    <div className="min-h-screen bg-[#E4E3E0] text-[#141414] font-sans selection:bg-[#141414] selection:text-[#E4E3E0]">
+    <div className="min-h-screen bg-bg-primary text-ink font-sans selection:bg-ink selection:text-bg-primary">
       {/* Mobile Header */}
-      <div className="md:hidden flex items-center justify-between p-4 border-b border-[#141414] bg-[#E4E3E0] sticky top-0 z-[60]">
+      <div className="md:hidden flex items-center justify-between p-4 border-b border-ink bg-bg-primary sticky top-0 z-[60]">
         <h1 className="text-lg font-bold tracking-tighter flex items-center gap-2">
-          <Zap className="w-5 h-5 fill-[#141414]" />
+          <Zap className="w-5 h-5 fill-ink" />
           AI CLONER
         </h1>
         <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="p-2">
@@ -210,13 +211,13 @@ export default function App() {
 
       {/* Sidebar */}
       <aside className={cn(
-        "fixed left-0 top-0 h-full w-64 border-r border-[#141414] bg-[#E4E3E0] z-50 transition-transform duration-300 md:translate-x-0",
+        "fixed left-0 top-0 h-full w-64 border-r border-ink bg-bg-primary z-50 transition-transform duration-300 md:translate-x-0",
         isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"
       )}>
-        <div className="p-6 border-b border-[#141414] flex justify-between items-center">
+        <div className="p-6 border-b border-ink flex justify-between items-center">
           <div>
             <h1 className="text-xl font-bold tracking-tighter flex items-center gap-2">
-              <Zap className="w-6 h-6 fill-[#141414]" />
+              <Zap className="w-6 h-6 fill-ink" />
               AI CLONER
             </h1>
             <p className="text-[10px] uppercase tracking-widest opacity-50 mt-1 font-mono">Content Optimizer v1.0</p>
@@ -267,9 +268,9 @@ export default function App() {
           </div>
         </nav>
 
-        <div className="absolute bottom-0 left-0 w-full p-6 border-t border-[#141414]">
+        <div className="absolute bottom-0 left-0 w-full p-6 border-t border-ink">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-full bg-[#141414] flex items-center justify-center text-[#E4E3E0] text-xs font-bold">
+            <div className="w-8 h-8 rounded-full bg-ink flex items-center justify-center text-bg-primary text-xs font-bold">
               MG
             </div>
             <div>
@@ -310,6 +311,7 @@ export default function App() {
               setReport={setAnalysisReport}
               candidates={analysisCandidates}
               setCandidates={setAnalysisCandidates}
+              onOpenSettings={() => setShowModelManager(true)}
             />
           )}
           {activeTab === "cloner" && (
@@ -320,6 +322,7 @@ export default function App() {
               onOpenVideoSuite={(data) => setVideoSuiteData(data)}
               aiSettings={aiSettings}
               onUpdateSettings={saveSettings}
+              onOpenSettings={() => setShowModelManager(true)}
             />
           )}
           {activeTab === "projects" && (
@@ -360,7 +363,7 @@ function NavButton({ active, onClick, icon, label }: { active: boolean, onClick:
       onClick={onClick}
       className={cn(
         "w-full flex items-center gap-3 px-4 py-3 text-sm font-medium transition-all duration-200 border border-transparent",
-        active ? "bg-[#141414] text-[#E4E3E0] border-[#141414]" : "hover:bg-[#141414]/5"
+        active ? "bg-ink text-bg-primary border-ink" : "hover:bg-ink/5"
       )}
     >
       {icon}
@@ -509,7 +512,8 @@ function Analyzer({
   report,
   setReport,
   candidates,
-  setCandidates
+  setCandidates,
+  onOpenSettings
 }: { 
   selectedNiche: Niche | null, 
   onClone: () => void,
@@ -524,7 +528,8 @@ function Analyzer({
   report: string | null,
   setReport: (r: string | null) => void,
   candidates: any[],
-  setCandidates: (c: any[]) => void
+  setCandidates: (c: any[]) => void,
+  onOpenSettings: () => void
 }) {
   const [loading, setLoading] = useState(false);
   const [customNiche, setCustomNiche] = useState("");
@@ -551,13 +556,26 @@ function Analyzer({
 
   const handleYtSearch = async () => {
     if (!ytSearchQuery) return;
+    
+    if (!aiSettings.youtubeApiKey) {
+      alert("Please set your YouTube API Key in AI Settings to search channels.");
+      onOpenSettings();
+      return;
+    }
+
     setYtLoading(true);
     try {
-      const res = await fetch(`/api/youtube/search/channels?q=${encodeURIComponent(ytSearchQuery)}`);
+      const res = await fetch(`/api/youtube/search/channels?q=${encodeURIComponent(ytSearchQuery)}`, {
+        headers: {
+          'x-youtube-api-key': aiSettings.youtubeApiKey
+        }
+      });
       const data = await res.json();
+      if (data.error) throw new Error(data.error);
       setYtResults(data);
     } catch (e) {
       console.error(e);
+      alert("Failed to search YouTube. Please check your API key.");
     } finally {
       setYtLoading(false);
     }
@@ -1146,6 +1164,10 @@ function VideoSuite({ data, onClose, aiSettings, onUpdateSettings }: { data: any
 function ChannelReport({ data, onClose, onSaveProject, onSaveResearch }: { data: any, onClose: () => void, onSaveProject: () => void, onSaveResearch: (item: any) => void }) {
   const [cloningAll, setCloningAll] = useState(false);
   const [clonedVideos, setClonedVideos] = useState<Set<number>>(new Set());
+  const [aiSettings] = useState<AISettings>(() => {
+    const saved = localStorage.getItem("ai_cloner_settings");
+    return saved ? JSON.parse(saved) : DEFAULT_SETTINGS;
+  });
 
   const handleCloneVideo = async (video: any, index: number) => {
     try {
@@ -1198,6 +1220,61 @@ Improved Description: ${v.improvedDescription}
     a.click();
   };
 
+  const [proposals, setProposals] = useState<any[]>([]);
+  const [loadingProposals, setLoadingProposals] = useState(false);
+
+  useEffect(() => {
+    if (data && data.channelName && data.niche) {
+      fetchProposals();
+    }
+  }, [data]);
+
+  const fetchProposals = async () => {
+    setLoadingProposals(true);
+    try {
+      const props = await generateImprovedContentProposals(data.channelName, data.niche, aiSettings);
+      setProposals(props);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoadingProposals(false);
+    }
+  };
+
+  const handleCloneProposal = async (proposal: any, index: number) => {
+    setCloningAll(true); // Reusing this state for loading indicator
+    try {
+      // Create a project directly from the proposal
+      const projectData = {
+        title: proposal.improvedTitle,
+        niche: data.niche,
+        original_url: "",
+        status: "draft",
+        data: {
+          improvedTitle: proposal.improvedTitle,
+          improvedDescription: `Improved version of "${proposal.originalTitle}". Concept: ${proposal.improvedConcept}`,
+          visualStyle: "Optimized for " + data.niche,
+          scenes: [], // Will need to be generated later
+          marketGapAnalysis: proposal.reason,
+          nichePivots: []
+        }
+      };
+
+      await fetch("/api/projects", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(projectData)
+      });
+
+      setClonedVideos(prev => new Set(prev).add(100 + index)); // Use offset ID for proposals
+      onSaveProject();
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setCloningAll(false);
+    }
+  };
+
   return (
     <motion.div 
       initial={{ opacity: 0, y: 50 }}
@@ -1215,7 +1292,7 @@ Improved Description: ${v.improvedDescription}
               onClick={() => {
                 onSaveResearch({
                   type: 'channel',
-                  external_id: data.channelName, // Using name as ID if we don't have the real ID here
+                  external_id: data.channelName,
                   title: data.channelName,
                   description: data.strategy,
                   thumbnail_url: "",
@@ -1250,8 +1327,44 @@ Improved Description: ${v.improvedDescription}
               <p className="text-sm leading-relaxed opacity-80">{data.strategy}</p>
             </div>
 
+            {/* Improved Content Proposals Section */}
+            <div className="bg-[#141414] text-[#E4E3E0] p-8 space-y-6">
+              <h3 className="text-xl font-bold flex items-center gap-2 italic font-serif">
+                <Sparkles className="w-5 h-5 text-emerald-400" /> "2.0 Version" Concepts
+              </h3>
+              <p className="text-[10px] opacity-50 uppercase tracking-widest">AI-Generated Improvements</p>
+              
+              {loadingProposals ? (
+                <div className="flex justify-center py-8">
+                  <div className="w-6 h-6 border-2 border-[#E4E3E0] border-t-transparent rounded-full animate-spin" />
+                </div>
+              ) : (
+                <div className="space-y-6">
+                  {proposals.map((prop, idx) => (
+                    <div key={idx} className="p-4 border border-[#E4E3E0]/20 bg-white/5 space-y-3">
+                      <div className="flex justify-between items-start">
+                        <span className="text-[9px] bg-emerald-500/20 text-emerald-300 px-2 py-1 uppercase tracking-widest font-bold">{prop.improvementType}</span>
+                      </div>
+                      <div>
+                        <p className="text-[10px] opacity-40 mb-1">Original: "{prop.originalTitle}"</p>
+                        <h4 className="font-bold text-sm text-emerald-300">"{prop.improvedTitle}"</h4>
+                      </div>
+                      <p className="text-[10px] opacity-70 leading-relaxed">{prop.improvedConcept}</p>
+                      <button 
+                        onClick={() => handleCloneProposal(prop, idx)}
+                        disabled={clonedVideos.has(100 + idx)}
+                        className="w-full py-2 mt-2 bg-[#E4E3E0] text-[#141414] text-[10px] font-bold hover:bg-white transition-all disabled:opacity-50"
+                      >
+                        {clonedVideos.has(100 + idx) ? "Saved to Projects" : "Clone This Concept"}
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
             {data.musicPrompts && data.musicPrompts.length > 0 && (
-              <div className="bg-[#141414] text-[#E4E3E0] p-8 space-y-6">
+              <div className="bg-white border border-[#141414] p-8 space-y-6">
                 <h3 className="text-xl font-bold flex items-center gap-2 italic font-serif">
                   <Volume2 className="w-5 h-5" /> Music Style Prompts
                 </h3>
@@ -1361,7 +1474,7 @@ Improved Description: ${v.improvedDescription}
   );
 }
 
-function Cloner({ niche, onSave, discoveredNiches, onOpenVideoSuite, aiSettings, onUpdateSettings }: { niche: Niche | null, onSave: () => void, discoveredNiches: any[], onOpenVideoSuite: (data: any) => void, aiSettings: AISettings, onUpdateSettings: (settings: AISettings) => void }) {
+function Cloner({ niche, onSave, discoveredNiches, onOpenVideoSuite, aiSettings, onUpdateSettings, onOpenSettings }: { niche: Niche | null, onSave: () => void, discoveredNiches: any[], onOpenVideoSuite: (data: any) => void, aiSettings: AISettings, onUpdateSettings: (settings: AISettings) => void, onOpenSettings: () => void }) {
   const [ytUrl, setYtUrl] = useState("");
   const [originalTitle, setOriginalTitle] = useState("");
   const [originalDesc, setOriginalDesc] = useState("");
@@ -1380,16 +1493,29 @@ function Cloner({ niche, onSave, discoveredNiches, onOpenVideoSuite, aiSettings,
 
   const handleFetchDetails = async () => {
     if (!ytUrl) return;
+    
+    if (!aiSettings.youtubeApiKey) {
+      alert("Please set your YouTube API Key in AI Settings to fetch video details.");
+      onOpenSettings();
+      return;
+    }
+
     setFetchingDetails(true);
     try {
-      const res = await fetch(`/api/youtube/video-details?url=${encodeURIComponent(ytUrl)}`);
+      const res = await fetch(`/api/youtube/video-details?url=${encodeURIComponent(ytUrl)}`, {
+        headers: {
+          'x-youtube-api-key': aiSettings.youtubeApiKey
+        }
+      });
       const data = await res.json();
+      if (data.error) throw new Error(data.error);
       if (data.snippet) {
         setOriginalTitle(data.snippet.title);
         setOriginalDesc(data.snippet.description);
       }
     } catch (e) {
       console.error(e);
+      alert("Failed to fetch video details. Please check your API key.");
     } finally {
       setFetchingDetails(false);
     }

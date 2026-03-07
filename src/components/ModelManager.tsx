@@ -14,11 +14,11 @@ interface ModelManagerProps {
 export function ModelManager({ settings, onSave, onClose }: ModelManagerProps) {
   const [tempSettings, setTempSettings] = useState<AISettings>(settings);
 
-  const handleUpdateModel = (type: keyof AISettings, field: keyof ModelConfig, value: any) => {
+  const handleUpdateModel = (type: Exclude<keyof AISettings, 'youtubeApiKey'>, field: keyof ModelConfig, value: any) => {
     setTempSettings(prev => ({
       ...prev,
       [type]: {
-        ...prev[type],
+        ...(prev[type] as ModelConfig),
         [field]: value,
         // Reset modelId if provider changes
         ...(field === 'provider' ? { modelId: PROVIDER_MODELS[value as AIProvider][0].id } : {})
@@ -26,9 +26,19 @@ export function ModelManager({ settings, onSave, onClose }: ModelManagerProps) {
     }));
   };
 
-  const ModelSection = ({ title, type, icon }: { title: string, type: keyof AISettings, icon: React.ReactNode }) => {
-    const config = tempSettings[type];
+  const ModelSection = ({ title, type, icon, requiredCapability }: { title: string, type: Exclude<keyof AISettings, 'youtubeApiKey'>, icon: React.ReactNode, requiredCapability: 'text' | 'image' | 'video' | 'audio' }) => {
+    const config = tempSettings[type] as ModelConfig;
     
+    // Filter providers that have at least one model with the required capability
+    const availableProviders = Object.keys(PROVIDER_MODELS).filter(provider => 
+      PROVIDER_MODELS[provider as AIProvider].some(m => m.capabilities.includes(requiredCapability))
+    ) as AIProvider[];
+
+    // Filter models for the selected provider
+    const availableModels = PROVIDER_MODELS[config.provider]?.filter(m => 
+      m.capabilities.includes(requiredCapability)
+    ) || [];
+
     return (
       <div className="bg-white border border-[#141414] p-6 space-y-4 shadow-[4px_4px_0px_0px_rgba(20,20,20,0.05)]">
         <div className="flex items-center gap-2 mb-2">
@@ -46,10 +56,9 @@ export function ModelManager({ settings, onSave, onClose }: ModelManagerProps) {
               onChange={(e) => handleUpdateModel(type, 'provider', e.target.value)}
               className="w-full bg-[#E4E3E0]/20 border border-[#141414]/10 p-2 text-sm font-bold focus:ring-0 focus:border-[#141414]"
             >
-              <option value="gemini">Google Gemini</option>
-              <option value="openrouter">OpenRouter (Mistral, Qwen, etc.)</option>
-              <option value="huggingface">Hugging Face</option>
-              <option value="ollama">Ollama (Local)</option>
+              {availableProviders.map(p => (
+                <option key={p} value={p}>{p.charAt(0).toUpperCase() + p.slice(1)}</option>
+              ))}
             </select>
           </div>
 
@@ -61,7 +70,7 @@ export function ModelManager({ settings, onSave, onClose }: ModelManagerProps) {
                 onChange={(e) => handleUpdateModel(type, 'modelId', e.target.value)}
                 className="w-full bg-[#E4E3E0]/20 border border-[#141414]/10 p-2 text-sm font-bold focus:ring-0 focus:border-[#141414]"
               >
-                {PROVIDER_MODELS[config.provider].map(m => (
+                {availableModels.map(m => (
                   <option key={m.id} value={m.id}>{m.name}</option>
                 ))}
                 <option value="custom">Custom ID...</option>
@@ -152,10 +161,33 @@ export function ModelManager({ settings, onSave, onClose }: ModelManagerProps) {
             </p>
           </div>
 
-          <ModelSection title="Analysis & Discovery Model" type="analysisModel" icon={<Database className="w-5 h-5" />} />
-          <ModelSection title="Content Generation Model" type="cloningModel" icon={<Globe className="w-5 h-5" />} />
-          <ModelSection title="Video Generation Model" type="videoModel" icon={<MonitorPlay className="w-5 h-5" />} />
-          <ModelSection title="Audio & Voice Model" type="audioModel" icon={<Cpu className="w-5 h-5" />} />
+          <ModelSection title="Analysis & Discovery Model" type="analysisModel" icon={<Database className="w-5 h-5" />} requiredCapability="text" />
+          <ModelSection title="Content Generation Model" type="cloningModel" icon={<Globe className="w-5 h-5" />} requiredCapability="text" />
+          <ModelSection title="Video Generation Model" type="videoModel" icon={<MonitorPlay className="w-5 h-5" />} requiredCapability="video" />
+          <ModelSection title="Audio & Voice Model" type="audioModel" icon={<Cpu className="w-5 h-5" />} requiredCapability="audio" />
+
+          <div className="bg-white border border-[#141414] p-6 space-y-4 shadow-[4px_4px_0px_0px_rgba(20,20,20,0.05)]">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="p-2 bg-[#FF0000] text-white rounded-sm">
+                <MonitorPlay className="w-5 h-5" />
+              </div>
+              <h3 className="text-lg font-bold italic font-serif">YouTube Integration</h3>
+            </div>
+            <div className="space-y-1">
+              <label className="text-[10px] uppercase tracking-widest font-bold opacity-50">YouTube Data API Key</label>
+              <div className="relative">
+                <Key className="absolute left-3 top-1/2 -translate-y-1/2 w-3 h-3 opacity-30" />
+                <input 
+                  type="password"
+                  value={tempSettings.youtubeApiKey || ""}
+                  onChange={(e) => setTempSettings(prev => ({ ...prev, youtubeApiKey: e.target.value }))}
+                  placeholder="Enter YouTube API Key"
+                  className="w-full bg-[#E4E3E0]/20 border border-[#141414]/10 p-2 pl-8 text-sm font-bold focus:ring-0 focus:border-[#141414]"
+                />
+              </div>
+              <p className="text-[10px] opacity-50">Required for channel analysis and video research.</p>
+            </div>
+          </div>
         </div>
 
         <div className="p-8 border-t border-[#141414] bg-white flex justify-end gap-4">

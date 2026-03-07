@@ -1,35 +1,45 @@
 
 import React from "react";
 import { Cpu, ChevronDown } from "lucide-react";
-import { AISettings, PROVIDER_MODELS, AIProvider } from "../services/aiConfig";
+import { AISettings, PROVIDER_MODELS, AIProvider, ModelConfig } from "../services/aiConfig";
 import { getModelCostDisplay } from "../data/modelCosts";
 import { cn } from "../utils/cn";
 
 interface QuickModelSelectorProps {
-  type: keyof AISettings;
+  type: Exclude<keyof AISettings, 'youtubeApiKey'>;
   settings: AISettings;
   onUpdate: (settings: AISettings) => void;
   className?: string;
 }
 
 export function QuickModelSelector({ type, settings, onUpdate, className }: QuickModelSelectorProps) {
-  const config = settings[type];
+  const config = settings[type] as ModelConfig;
   
-  // Map settings type to task for cost display
-  const taskMap: Record<string, 'analysis' | 'cloning' | 'video' | 'audio'> = {
-    analysisModel: 'analysis',
-    cloningModel: 'cloning',
-    videoModel: 'video',
-    audioModel: 'audio'
+  // Map settings type to task for cost display and capability filtering
+  const taskMap: Record<string, { task: 'analysis' | 'cloning' | 'video' | 'audio', capability: 'text' | 'image' | 'video' | 'audio' }> = {
+    analysisModel: { task: 'analysis', capability: 'text' },
+    cloningModel: { task: 'cloning', capability: 'text' },
+    videoModel: { task: 'video', capability: 'video' },
+    audioModel: { task: 'audio', capability: 'audio' }
   };
 
-  const task = taskMap[type];
+  const { task, capability } = taskMap[type];
   
+  // Filter providers that have at least one model with the required capability
+  const availableProviders = Object.keys(PROVIDER_MODELS).filter(provider => 
+    PROVIDER_MODELS[provider as AIProvider].some(m => m.capabilities.includes(capability))
+  ) as AIProvider[];
+
+  // Filter models for the selected provider
+  const availableModels = PROVIDER_MODELS[config.provider]?.filter(m => 
+    m.capabilities.includes(capability)
+  ) || [];
+
   const handleModelChange = (modelId: string) => {
     const newSettings = {
       ...settings,
       [type]: {
-        ...settings[type],
+        ...(settings[type] as ModelConfig),
         modelId
       }
     };
@@ -37,15 +47,20 @@ export function QuickModelSelector({ type, settings, onUpdate, className }: Quic
   };
 
   const handleProviderChange = (provider: AIProvider) => {
-    const newSettings = {
-      ...settings,
-      [type]: {
-        ...settings[type],
-        provider,
-        modelId: PROVIDER_MODELS[provider][0].id
-      }
-    };
-    onUpdate(newSettings);
+    // When switching provider, select the first available model with the required capability
+    const firstModel = PROVIDER_MODELS[provider].find(m => m.capabilities.includes(capability));
+    
+    if (firstModel) {
+      const newSettings = {
+        ...settings,
+        [type]: {
+          ...(settings[type] as ModelConfig),
+          provider,
+          modelId: firstModel.id
+        }
+      };
+      onUpdate(newSettings);
+    }
   };
 
   return (
@@ -58,10 +73,9 @@ export function QuickModelSelector({ type, settings, onUpdate, className }: Quic
             onChange={(e) => handleProviderChange(e.target.value as AIProvider)}
             className="bg-transparent text-[10px] font-bold uppercase focus:outline-none cursor-pointer"
           >
-            <option value="gemini">Gemini</option>
-            <option value="openrouter">OpenRouter</option>
-            <option value="ollama">Ollama</option>
-            <option value="huggingface">HF</option>
+            {availableProviders.map(p => (
+              <option key={p} value={p}>{p}</option>
+            ))}
           </select>
         </div>
 
@@ -71,7 +85,7 @@ export function QuickModelSelector({ type, settings, onUpdate, className }: Quic
             onChange={(e) => handleModelChange(e.target.value)}
             className="bg-transparent text-[10px] font-bold focus:outline-none cursor-pointer max-w-[120px] truncate"
           >
-            {PROVIDER_MODELS[config.provider].map(m => (
+            {availableModels.map(m => (
               <option key={m.id} value={m.id}>{m.name}</option>
             ))}
           </select>

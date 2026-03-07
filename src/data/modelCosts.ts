@@ -9,73 +9,56 @@ export interface ModelCost {
 }
 
 export const MODEL_COSTS: Record<string, ModelCost> = {
-  'gemini-3.1-pro-preview': {
-    id: 'gemini-3.1-pro-preview',
-    provider: 'gemini',
-    costPer1MTokens: 3.50,
-    unit: 'tokens',
-    tier: 'Standard'
-  },
-  'gemini-3-flash-preview': {
-    id: 'gemini-3-flash-preview',
-    provider: 'gemini',
-    costPer1MTokens: 0.10,
-    unit: 'tokens',
-    tier: 'Budget'
-  },
-  'gemini-2.5-flash': {
-    id: 'gemini-2.5-flash',
-    provider: 'gemini',
-    costPer1MTokens: 0.10,
-    unit: 'tokens',
-    tier: 'Budget'
-  },
-  'veo-3.1-fast-generate-preview': {
-    id: 'veo-3.1-fast-generate-preview',
-    provider: 'gemini',
-    costPerGeneration: 0.50,
-    unit: 'generation',
-    tier: 'Premium'
-  },
-  'gemini-2.5-flash-preview-tts': {
-    id: 'gemini-2.5-flash-preview-tts',
-    provider: 'gemini',
-    costPer1MTokens: 0.10,
-    unit: 'tokens',
-    tier: 'Budget'
-  },
-  'mistralai/mistral-7b-instruct': {
-    id: 'mistralai/mistral-7b-instruct',
-    provider: 'openrouter',
-    costPer1MTokens: 0.05,
-    unit: 'tokens',
-    tier: 'Budget'
-  },
-  'anthropic/claude-3-opus': {
-    id: 'anthropic/claude-3-opus',
-    provider: 'openrouter',
-    costPer1MTokens: 15.00,
-    unit: 'tokens',
-    tier: 'Premium'
-  },
-  'llama3': {
-    id: 'llama3',
-    provider: 'ollama',
-    unit: 'free',
-    tier: 'Free'
-  },
-  'mistral': {
-    id: 'mistral',
-    provider: 'ollama',
-    unit: 'free',
-    tier: 'Free'
-  },
-  'qwen': {
-    id: 'qwen',
-    provider: 'ollama',
-    unit: 'free',
-    tier: 'Free'
-  }
+  // Gemini Models
+  'gemini-3.1-pro-preview': { id: 'gemini-3.1-pro-preview', provider: 'gemini', costPer1MTokens: 3.50, unit: 'tokens', tier: 'Standard' },
+  'gemini-3-flash-preview': { id: 'gemini-3-flash-preview', provider: 'gemini', costPer1MTokens: 0.10, unit: 'tokens', tier: 'Budget' },
+  'gemini-2.5-flash': { id: 'gemini-2.5-flash', provider: 'gemini', costPer1MTokens: 0.10, unit: 'tokens', tier: 'Budget' },
+  'gemini-3.1-flash-image-preview': { id: 'gemini-3.1-flash-image-preview', provider: 'gemini', costPerGeneration: 0.04, unit: 'generation', tier: 'Standard' },
+  'veo-3.1-fast-generate-preview': { id: 'veo-3.1-fast-generate-preview', provider: 'gemini', costPerGeneration: 0.50, unit: 'generation', tier: 'Premium' },
+  'veo-3.1-generate-preview': { id: 'veo-3.1-generate-preview', provider: 'gemini', costPerGeneration: 1.50, unit: 'generation', tier: 'Premium' },
+  'gemini-2.5-flash-preview-tts': { id: 'gemini-2.5-flash-preview-tts', provider: 'gemini', costPer1MTokens: 0.10, unit: 'tokens', tier: 'Budget' },
+
+  // OpenAI Models
+  'gpt-4o': { id: 'gpt-4o', provider: 'openai', costPer1MTokens: 5.00, unit: 'tokens', tier: 'Premium' },
+  'gpt-4-turbo': { id: 'gpt-4-turbo', provider: 'openai', costPer1MTokens: 10.00, unit: 'tokens', tier: 'Premium' },
+  'gpt-3.5-turbo': { id: 'gpt-3.5-turbo', provider: 'openai', costPer1MTokens: 0.50, unit: 'tokens', tier: 'Budget' },
+  'dall-e-3': { id: 'dall-e-3', provider: 'openai', costPerGeneration: 0.04, unit: 'generation', tier: 'Standard' },
+  'tts-1': { id: 'tts-1', provider: 'openai', costPer1MTokens: 15.00, unit: 'tokens', tier: 'Standard' },
+  'tts-1-hd': { id: 'tts-1-hd', provider: 'openai', costPer1MTokens: 30.00, unit: 'tokens', tier: 'Premium' },
+
+  // Anthropic Models
+  'claude-3-opus-20240229': { id: 'claude-3-opus-20240229', provider: 'anthropic', costPer1MTokens: 15.00, unit: 'tokens', tier: 'Premium' },
+  'claude-3-sonnet-20240229': { id: 'claude-3-sonnet-20240229', provider: 'anthropic', costPer1MTokens: 3.00, unit: 'tokens', tier: 'Standard' },
+  'claude-3-haiku-20240307': { id: 'claude-3-haiku-20240307', provider: 'anthropic', costPer1MTokens: 0.25, unit: 'tokens', tier: 'Budget' },
+
+  // Mistral Models
+  'mistral-large-latest': { id: 'mistral-large-latest', provider: 'mistral', costPer1MTokens: 8.00, unit: 'tokens', tier: 'Premium' },
+  'mistral-medium-latest': { id: 'mistral-medium-latest', provider: 'mistral', costPer1MTokens: 2.70, unit: 'tokens', tier: 'Standard' },
+  'mistral-small-latest': { id: 'mistral-small-latest', provider: 'mistral', costPer1MTokens: 0.70, unit: 'tokens', tier: 'Budget' },
+
+  // DeepSeek Models
+  'deepseek-chat': { id: 'deepseek-chat', provider: 'deepseek', costPer1MTokens: 0.14, unit: 'tokens', tier: 'Budget' },
+  'deepseek-coder': { id: 'deepseek-coder', provider: 'deepseek', costPer1MTokens: 0.14, unit: 'tokens', tier: 'Budget' },
+
+  // OpenRouter Models
+  'mistralai/mistral-7b-instruct': { id: 'mistralai/mistral-7b-instruct', provider: 'openrouter', costPer1MTokens: 0.05, unit: 'tokens', tier: 'Budget' },
+  'google/gemini-pro-1.5': { id: 'google/gemini-pro-1.5', provider: 'openrouter', costPer1MTokens: 3.50, unit: 'tokens', tier: 'Standard' },
+  'anthropic/claude-3-opus': { id: 'anthropic/claude-3-opus', provider: 'openrouter', costPer1MTokens: 15.00, unit: 'tokens', tier: 'Premium' },
+  'qwen/qwen-72b-chat': { id: 'qwen/qwen-72b-chat', provider: 'openrouter', costPer1MTokens: 0.90, unit: 'tokens', tier: 'Budget' },
+  'deepseek/deepseek-chat': { id: 'deepseek/deepseek-chat', provider: 'openrouter', costPer1MTokens: 0.14, unit: 'tokens', tier: 'Budget' },
+  'meta-llama/llama-3-70b-instruct': { id: 'meta-llama/llama-3-70b-instruct', provider: 'openrouter', costPer1MTokens: 0.70, unit: 'tokens', tier: 'Budget' },
+
+  // Hugging Face Models (Assuming Inference API free tier or low cost)
+  'mistralai/Mistral-7B-v0.1': { id: 'mistralai/Mistral-7B-v0.1', provider: 'huggingface', unit: 'free', tier: 'Free' },
+  'meta-llama/Llama-2-7b-hf': { id: 'meta-llama/Llama-2-7b-hf', provider: 'huggingface', unit: 'free', tier: 'Free' },
+  'stabilityai/stable-diffusion-xl-base-1.0': { id: 'stabilityai/stable-diffusion-xl-base-1.0', provider: 'huggingface', unit: 'free', tier: 'Free' },
+
+  // Ollama Models (Local)
+  'llama3': { id: 'llama3', provider: 'ollama', unit: 'free', tier: 'Free' },
+  'mistral': { id: 'mistral', provider: 'ollama', unit: 'free', tier: 'Free' },
+  'qwen': { id: 'qwen', provider: 'ollama', unit: 'free', tier: 'Free' },
+  'gemma': { id: 'gemma', provider: 'ollama', unit: 'free', tier: 'Free' },
+  'llava': { id: 'llava', provider: 'ollama', unit: 'free', tier: 'Free' },
 };
 
 export function getModelCostDisplay(modelId: string, task?: 'analysis' | 'cloning' | 'video' | 'audio'): string {
